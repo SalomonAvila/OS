@@ -1,8 +1,8 @@
 Artificial Intelligence, 3000, 2
-1, P, 1-10-2021
+1, D, 1-10-2021
 2, P, 1-10-2021
 Computer Networks, 3001, 5
-1, D, 1-10-2021
+1, P, 1-10-2021
 2, P, 1-10-2021
 3, D, 1-10-2021
 4, D, 1-10-2021
@@ -15,7 +15,7 @@ Cybersecurity Essentials, 3002, 6
 5, D, 1-10-2021
 6, D, 1-10-2021
 Data Structures, 3003, 1
-1, P, 1-10-2021
+1, P, 28-05-2025
 Machine Learning, 3004, 3
 1, D, 1-10-2021
 2, D, 1-10-2021

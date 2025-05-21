@@ -43,6 +43,8 @@ struct DbLine{
 /**
  * Esta es la estructura para pasar los datos necesarios al hilo
  * Donde se encuentra el contenido del mensaje del pipe, el nombre del archivo, el nombre del pipe y la fecha
+ * Note que la fecha es una semana mas alla que la actual
+ * En caso que sea con la de la BD primero leerla  con esa estructura
  */
 struct InformacionHiloAuxiliar1{
   struct PipeRMessage *msg;

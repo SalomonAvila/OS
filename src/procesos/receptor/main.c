@@ -128,7 +128,7 @@ void ejecutarPrestamo(struct InformacionHiloAuxiliar1 *estructura)
           char fecha[64];
           if (sscanf(lineas[i + j], " %d, %c, %63s", &ejemplar, &estado, fecha) == 3)
           {
-            if (estado == 'P')
+            if (estado == 'D')
             {
               // Actualizar a 'P'
               snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, P, %s\n", ejemplar, fecha);
@@ -172,7 +172,6 @@ void ejecutarPrestamo(struct InformacionHiloAuxiliar1 *estructura)
 
   free(estructura->msg);
   free(estructura);
-  pthread_exit(NULL);
 }
 
 /**
@@ -224,8 +223,9 @@ void *executeOperation(void *ptr)
       const char *ptrBuscado = nombreBuscado;
       while (*ptrBuscado == ' ')
         ptrBuscado++;
-      SYNC_DEBUG_MSG("PRUEBAAAAAAAAAAAAAAAAAAAAAAA");
-      SYNC_DEBUG_MSG("Se está comparando |%s| con |%s|", ptrLibro, ptrBuscado);
+      //SYNC_DEBUG_MSG("PRUEBAAAAAAAAAAAAAAAAAAAAAAA");
+      //SYNC_DEBUG_MSG("La fecha es: %s", estructura->fecha);
+      //SYNC_DEBUG_MSG("Se está comparando |%s| con |%s|", ptrLibro, ptrBuscado);
       if (strcmp(ptrLibro, ptrBuscado) == 0 && isbn == isbnBuscado)
       {
         encontrado = 1;
@@ -236,12 +236,22 @@ void *executeOperation(void *ptr)
           char fecha[64];
           if (sscanf(lineas[i + j], " %d, %c, %63s", &ejemplar, &estado, fecha) == 3)
           {
-            if (estado == 'D')
+            if (estado == 'P' && estructura->msg->operation == 'D')
             {
               // Actualizar a 'P'
-              snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, P, %s\n", ejemplar, fecha);
+              snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, D, %s\n", ejemplar, fecha);
               actualizado = 1;
               break;
+            }
+            if((estado == 'P') && (strcmp(estructura->fecha,fecha) != 0))
+            {
+              snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, P, %s\n", ejemplar, estructura->fecha);
+              actualizado = 1;
+              break;
+            }else{
+              SYNC_DEBUG_MSG("No se puede renovar el libro, ya fue prestado");
+              SYNC_DEBUG_MSG("La fecha del archivo es |%s| y la fecha de la renovacion es |%s|",fecha,estructura->fecha);
+              SYNC_DEBUG_MSG("La comparacion retorna %d",strcmp(estructura->fecha,fecha));
             }
           }
         }
@@ -302,6 +312,7 @@ int main(int argc, char *argv[])
    */
   time_t tiempo = time(NULL);
   struct tm *tlocal = localtime(&tiempo);
+  tlocal->tm_mday += 7;
   char editDate[11];
   strftime(editDate, 11, "%d-%m-%Y", tlocal);
   SYNC_DEBUG_MSG("%s\n", editDate);
@@ -419,6 +430,7 @@ int main(int argc, char *argv[])
           }
           *(infoHilo->msg) = msg;
           strcpy(infoHilo->nombreArchivo, fileDatos);
+          strcpy(infoHilo->fecha, editDate);
           pthread_t hiloAux;
           pthread_create(&hiloAux, NULL, executeOperation, infoHilo);
           pthread_detach(hiloAux);
@@ -452,6 +464,7 @@ int main(int argc, char *argv[])
           }
           *(infoHilo->msg) = msg;
           strcpy(infoHilo->nombreArchivo, fileDatos);
+          strcpy(infoHilo->fecha, editDate);
           pthread_t hiloAux;
           pthread_create(&hiloAux, NULL, executeOperation, infoHilo);
           pthread_detach(hiloAux);

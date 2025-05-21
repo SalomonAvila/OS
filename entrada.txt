@@ -1,6 +1,4 @@
 D, Artificial Intelligence, 3000 
-R, Computer Networks, 3001
-R, Cybersecurity Essentials, 3002
-P, Data Structures, 3003
-P, Machine Learning, 3004
+P, Computer Networks, 3001
+R, Data Structures, 3003
 Q, Salir, 0
