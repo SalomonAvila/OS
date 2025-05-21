@@ -1,0 +1,80 @@
+\documentclass[a4paper,12pt]{article}
+
+% Paquetes útiles
+\usepackage[utf8]{inputenc}  % Soporte para caracteres UTF-8
+\usepackage[T1]{fontenc}     % Codificación de fuente
+\usepackage{lmodern}         % Mejor apariencia de fuentes
+\usepackage{graphicx}        % Permite incluir imágenes
+\usepackage{hyperref}        % Hipervínculos
+\usepackage{geometry}        % Configurar márgenes
+\usepackage{fancyhdr}        % Encabezados y pies de página
+\usepackage{titlesec}        % Personalizar títulos
+\usepackage{listings}        % Código fuente
+\usepackage{xcolor}          % Colores
+
+% Configuración de márgenes
+\geometry{left=3cm, right=3cm, top=3cm, bottom=3cm}
+
+% Personalización de encabezados
+% \pagestyle{fancy}
+% \fancyhead[L]{Documentación del Proyecto}
+% \fancyhead[R]{\today}
+
+% Configuración de títulos
+\titleformat{\section}{\large\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% Configuración de código fuente
+\lstset{
+    language=Python,             % Ajusta el lenguaje según lo que necesites
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numbersep=5pt,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true
+}
+
+% Título del documento
+\title{Documentación del Proyecto}
+\author{Miguel Francisco Vargas Contreras}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introducción}
+Describe aquí el propósito del proyecto, su alcance y motivación.
+
+\section{Requerimientos}
+Lista de requerimientos funcionales y no funcionales del sistema.
+
+\section{Arquitectura del Sistema}
+Explica la estructura general, tecnologías usadas y diseño del sistema.
+
+\section{Instalación y Configuración}
+\subsection{Requisitos Previos}
+Lista de dependencias y configuraciones necesarias.
+\subsection{Instrucciones de Instalación}
+Pasos detallados para instalar y ejecutar el sistema.
+
+\section{Uso del Sistema}
+Ejemplos de uso, instrucciones y capturas de pantalla si aplica.
+
+\section{Código Fuente}
+\begin{lstlisting}
+# Ejemplo de codigo
+def hello():
+    print("Hola, mundo")
+\end{lstlisting}
+
+\section{Conclusión y Futuras Mejoras}
+Resumen del estado actual del proyecto y mejoras planificadas.
+
+\end{document}
