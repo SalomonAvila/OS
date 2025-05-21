@@ -101,13 +101,14 @@ void *executeOperation(void *ptr)
     if (sscanf(lineas[i], " %255[^,],%d, %d", nombreLibro, &isbn, &cantidad) == 3)
     {
       char *ptrLibro = nombreLibro;
-      while (*ptrLibro == ' ') ptrLibro++;
+      while (*ptrLibro == ' ')
+        ptrLibro++;
       const char *ptrBuscado = nombreBuscado;
-      while (*ptrBuscado == ' ') ptrBuscado++;
+      while (*ptrBuscado == ' ')
+        ptrBuscado++;
       if (strcmp(ptrLibro, ptrBuscado) == 0 && isbn == isbnBuscado)
       {
         encontrado = 1;
-        // Buscar ejemplar disponible en las siguientes 'cantidad' líneas
         for (int j = 1; j <= cantidad && i + j < total; j++)
         {
           int ejemplar;
@@ -163,6 +164,11 @@ int bufferIndex = 0;
 sem_t semaforo;
 int main(int argc, char *argv[])
 {
+  time_t tiempo = time(NULL);              
+  struct tm *tlocal = localtime(&tiempo);
+  char output[11];
+  strftime(output, 11, "%d-%m-%Y", tlocal);
+  SYNC_DEBUG_MSG("%s\n", output);
   char *pipeReceptor = NULL;
   char *fileDatos = NULL;
   char *fileSalida = NULL;
@@ -304,7 +310,7 @@ int main(int argc, char *argv[])
             perror("No se pudo reservar memoria para msg");
             exit(1);
           }
-          *(infoHilo->msg) = msg;                     
+          *(infoHilo->msg) = msg;
           strcpy(infoHilo->nombreArchivo, fileDatos);
           pthread_t hiloAux;
           pthread_create(&hiloAux, NULL, executeOperation, infoHilo);
