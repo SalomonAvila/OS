@@ -26,4 +26,5 @@ struct DbLine{
 struct InformacionHiloAuxiliar1{
   struct PipeRMessage *msg;
   char nombreArchivo[100];
+  char nombrePipe[100];
 };

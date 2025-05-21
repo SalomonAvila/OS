@@ -1,6 +1,6 @@
-D, Alicia en el País de las Maravillas, 2133 
-R, Hamlet, 234 
-R, Historia de Colombia, 223 
-P, Cálculo Diferencial, 120 
-P, Algebra Lineal, 111
+D, Artificial Intelligence, 3000 
+R, Computer Networks, 3001
+R, Cybersecurity Essentials, 3002
+P, Data Structures, 3003
+P, Machine Learning, 3004
 Q, Salir, 0
