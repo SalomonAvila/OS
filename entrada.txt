@@ -1,4 +1,4 @@
-D, Artificial Intelligence, 3000 
+P, Artificial Intelligence, 3000 
 P, Computer Networks, 3001
 R, Data Structures, 3003
 Q, Salir, 0

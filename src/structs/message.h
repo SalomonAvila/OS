@@ -52,3 +52,14 @@ struct InformacionHiloAuxiliar1{
   char nombrePipe[100];
   char fecha[11];
 };
+
+/**
+ * Estructura para el reporte generado por el hilo 2
+ */
+struct Report {
+  char operation;
+  char nombre[1000];
+  int isbn;
+  int ejemplar;
+  char fecha[11];
+};
