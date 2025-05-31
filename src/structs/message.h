@@ -13,11 +13,11 @@ struct PipeRMessage {
 };
 /**
  * Para esta respeusta se usa un estatus que puede ser 0 o 1
- * Y el mensaje de respuesta de maximo 200 caracteres
+ * Y el mensaje de respuesta de maximo 500 caracteres
  */
 struct PipeSMessage {
   int status;
-  char mensaje[200]; 
+  char mensaje[500]; 
 };
 
 /**
@@ -46,7 +46,7 @@ struct DbLine{
  * Note que la fecha es una semana mas alla que la actual
  * En caso que sea con la de la BD primero leerla  con esa estructura
  */
-struct InformacionHiloAuxiliar1{
+struct TareaBuffer {
   struct PipeRMessage *msg;
   char nombreArchivo[100];
   char nombrePipe[100];

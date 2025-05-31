@@ -10,14 +10,14 @@
 
 #include "../../structs/message.h"
 
-#ifdef DEBUG
+// #ifdef DEBUG
 #define DEBUG_MSG(str, ...)                                \
   do {                                                     \
     printf("\e[34m[DEBUG] " str "\n\e[0m", ##__VA_ARGS__); \
   } while (false)
-#else
-#define DEBUG_MSG(str, ...) ((void)0)
-#endif
+// #else
+// #define DEBUG_MSG(str, ...) ((void)0)
+// #endif
 
 void wrongUsage(char *argv0) {
   printf("Error, el uso correcto es: \n\n");
@@ -26,26 +26,46 @@ void wrongUsage(char *argv0) {
 }
 
 void sendMessage(char *pipeReceptor, struct PipeRMessage msg) {
-  int pipe_fd = open(pipeReceptor, O_WRONLY, 0);
+  DEBUG_MSG("Intentando enviar mensaje...");
+  int pipe_fd = open(pipeReceptor, O_WRONLY);
   if (pipe_fd == -1) {
     perror("Error al abrir el pipe receptor");
     exit(1);
   }
+  DEBUG_MSG("Pipe abierto");
   
   write(pipe_fd, &msg, sizeof(msg));
   
-  struct PipeSMessage response;
+  DEBUG_MSG("Mensaje enviado");
   
-  int pipe_rp = open(msg.pipeName, O_RDONLY, 0);
+  int pipe_rp = open(msg.pipeName, O_RDONLY);
+  int dummy = open(msg.pipeName, O_WRONLY);
   if (pipe_rp == -1) {
     perror("Error al abrir el pipe para recibir");
     exit(1);
   }
-  read(pipe_rp, &response, sizeof(response));
+  DEBUG_MSG("Pipe solicitante abierto");
 
-  DEBUG_MSG("Confirmación Recibida:\n  Status: %d\n  Message: %s\n",
+  struct PipeSMessage response = {0};
+  
+  DEBUG_MSG("Esperando confirmación");
+  ssize_t bytes_read = read(pipe_rp, &response, sizeof(struct PipeSMessage));
+  if (bytes_read == -1) {
+    perror("Error al leer del pipe");
+    // Manejo de error
+  } else if (bytes_read == 0) {
+    fprintf(stderr, "El pipe fue cerrado por el otro extremo\n");
+    // Manejo de EOF
+  } else if (bytes_read != sizeof(struct PipeSMessage)) {
+    fprintf(stderr, "Lectura incompleta del pipe: %zd bytes\n", bytes_read);
+    // Manejo de datos incompletos
+  }
+
+  printf("Confirmación Recibida:\n  Status: %d\n  Message: %s\n",
             response.status, response.mensaje);
 
+  close(pipe_rp);
+  close(dummy);
   close(pipe_fd);
 }
 

@@ -7,8 +7,8 @@ SRC_DIR     = src/procesos
 BIN_DIR     = bin
 
 # Archivos fuente
-SOLICITANTE_SRC = $(SRC_DIR)/solicitante/main.c
-RECEPTOR_SRC    = $(SRC_DIR)/receptor/main.c
+SOLICITANTE_SRC = $(SRC_DIR)/solicitante/*.c
+RECEPTOR_SRC    = $(SRC_DIR)/receptor/*.c
 
 # Archivos objeto
 SOLICITANTE_OBJ = $(SOLICITANTE_SRC:.c=.o)
@@ -29,7 +29,7 @@ $(SOLICITANTE): $(SOLICITANTE_OBJ) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(RECEPTOR): $(RECEPTOR_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -lpthread -o $@
 
 # Crear bin si no existe
 $(BIN_DIR):
