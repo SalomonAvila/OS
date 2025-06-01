@@ -26,10 +26,10 @@ bool IS_VERBOSE = false;
  * en la terminal, solo se activa con el flag de compilacion -DDEBUG
  */
 #ifdef DEBUG
-#define SYNC_DEBUG_MSG(str, ...)                               \
-  do {                                         \
-      printf("\e[31m[DEBUG] " str "\n\e[0m", ##__VA_ARGS__); \
-      fflush(stdout);                                          \
+#define SYNC_DEBUG_MSG(str, ...)                           \
+  do {                                                     \
+    printf("\e[31m[DEBUG] " str "\n\e[0m", ##__VA_ARGS__); \
+    fflush(stdout);                                        \
   } while (0)
 #define SYNC_VERBOSE_MSG(str, ...)                           \
   do {                                                       \
@@ -134,7 +134,8 @@ int executeOperation(struct TareaBuffer *ptr) {
   fclose(db);
 
   // Buscar el libro y ejemplar disponible
-  int encontrado = 0, actualizado = 0;
+  int encontrado = 0;
+  int actualizado = 0;
   for (int i = 0; i < total; i++) {
     char nombreLibro[256];
     int isbn, cantidad;
@@ -178,9 +179,18 @@ int executeOperation(struct TareaBuffer *ptr) {
                 // prestado, simplemente se lo prestan
 
                 // if (estado == 'P') {
+
+                time_t tiempo = time(NULL);
+                struct tm *tlocal = localtime(&tiempo);
+                tlocal->tm_mday += 7;
+                mktime(tlocal);
+
+                char newDate[11];
+                strftime(newDate, 11, "%d-%m-%Y", tlocal);
+
                 actualizadoLibro = ejemplar;
                 snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, P, %s\n",
-                         ejemplar, fecha);
+                         ejemplar, newDate);
                 actualizado = 1;
                 // }
                 break;
@@ -209,23 +219,22 @@ int executeOperation(struct TareaBuffer *ptr) {
     }
     for (int i = 0; i < total; i++) fputs(lineas[i], db);
     fclose(db);
-    
-    switch (tarea->msg->operation)
-    {
-    case 'D':
-      SYNC_VERBOSE_MSG("Libro Devuelvo correctamente");
-      break;
-    case 'R':
-      SYNC_VERBOSE_MSG("Libro Renovado correctamente");
-      break;
-    case 'P':
-      SYNC_VERBOSE_MSG("Libro Prestado correctamente");
-      break;
-    
-    default:
-      break;
+
+    switch (tarea->msg->operation) {
+      case 'D':
+        SYNC_VERBOSE_MSG("Libro Devuelvo correctamente");
+        break;
+      case 'R':
+        SYNC_VERBOSE_MSG("Libro Renovado correctamente");
+        break;
+      case 'P':
+        SYNC_VERBOSE_MSG("Libro Prestado correctamente");
+        break;
+
+      default:
+        break;
     }
-  }else {
+  } else {
     SYNC_VERBOSE_MSG("No se pudo realizar la operación");
   }
 
@@ -337,13 +346,13 @@ int main(int argc, char *argv[]) {
   /**
    * C tiene incorporado el tipo de dato time_t, que extrae la hora y fecha
    * actual Tambien la estructura tm, la cual sigue el siguiente formato: int
-   * tm_sec;        los segundos después del minuto -- [0,61] int tm_min; /* los
-   * minutos después de la hora -- [0,59] int tm_hour;       /* las horas desde
-   * la medianoche -- [0,23] int tm_mday;       /* el día del mes -- [1,31] int
-   * tm_mon;        /* los meses desde Enero -- [0,11] int tm_year;       /* los
-   * años desde 1900 int tm_wday;       /* los días desde el Domingo -- [0,6]
-   * int tm_yday;       /* los días desde Enero -- [0,365]
-   * int tm_isdst;      /* el flag del Horario de Ahorro de Energía
+   * tm_sec;        los segundos después del minuto -- [0,61] int tm_min;  los
+   * minutos después de la hora -- [0,59] int tm_hour;        las horas desde
+   * la medianoche -- [0,23] int tm_mday;        el día del mes -- [1,31] int
+   * tm_mon;         los meses desde Enero -- [0,11] int tm_year;        los
+   * años desde 1900 int tm_wday;        los días desde el Domingo -- [0,6]
+   * int tm_yday;        los días desde Enero -- [0,365]
+   * int tm_isdst;       el flag del Horario de Ahorro de Energía
    */
   time_t tiempo = time(NULL);
   time_t tiempoActual = time(NULL);
@@ -405,13 +414,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int pipe_fd = open(pipeReceptor, O_RDONLY, 0);
+  int pipe_fd = open(pipeReceptor, O_RDWR, 0);
   if (pipe_fd == -1) {
     perror("Error al abrir el pipe receptor");
     return -1;
   }
-
-  char *opcion;
 
   // Hilo Auxiliar 2
   pthread_t hConsola;
@@ -426,8 +433,8 @@ int main(int argc, char *argv[]) {
   while (ejecutando) {
     struct Report temporalReport;
     while (read(pipe_fd, &msg, sizeof(msg)) > 0) {
-      SYNC_VERBOSE_MSG("Mensaje recibido: %c, %s, %d", msg.operation,
-                     msg.nombre, msg.isbn);
+      SYNC_VERBOSE_MSG("\nOperación: %c\nTitulo:    %s\nISBN:      %d", msg.operation,
+                       msg.nombre, msg.isbn);
 
       switch (msg.operation) {
         case 'D': {
