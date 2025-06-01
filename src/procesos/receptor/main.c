@@ -112,7 +112,7 @@ int executeOperation(struct TareaBuffer *ptr) {
    * es muy sensible la funcion de escritura en una posicion de C, entonces nos
    * podemos volar algo que no debemos
    */
-  char lineas[1000][1024];
+  char lineas[3300][300];
   int total = 0;
   while (fgets(lineas[total], sizeof(lineas[total]), db) && total < 1000)
     total++;

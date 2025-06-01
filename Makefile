@@ -45,4 +45,4 @@ $(BIN_DIR):
 
 # Limpiar
 clean:
-	rm -rf $(BIN_DIR) src/**/*.o src/**/*.d
+	rm -rf $(BIN_DIR) ./src/**/*.o src/**/*.d
