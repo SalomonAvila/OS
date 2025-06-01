@@ -39,6 +39,8 @@ bool IS_VERBOSE = false;
   } while (0)
 #endif
 
+bool ejecutando = true;
+
 struct Report reportLog[10000];
 int reportLogIndex = 0;
 struct PipeRMessage msg;
@@ -241,7 +243,7 @@ void generateReport() {
 }
 
 void *hiloConsola(void *ptr) {
-  while (1) {
+  while (ejecutando) {
     printf("r - Generar reporte\n");
     fflush(stdout);
     printf("s - Terminar ejecución\n");
@@ -263,6 +265,8 @@ void *hiloConsola(void *ptr) {
       fflush(stdout);
     }
   }
+
+  return NULL;
 }
 
 void agregarTareaBuffer(struct TareaBuffer *t) {
@@ -290,6 +294,7 @@ void *hiloTrabajador(void *ptr) {
     sem_getvalue(&semaforoTareasDisponibles, &valueSemTareas);
     sem_wait(
         &semaforoTareasDisponibles);  // Espera a que haya una tarea disponible
+    if(!ejecutando) break;
 
     pthread_mutex_lock(&mutexBuffer);
     struct TareaBuffer tarea;
@@ -319,6 +324,7 @@ void *hiloTrabajador(void *ptr) {
 
     free(report);
   }
+  return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -337,7 +343,7 @@ int main(int argc, char *argv[]) {
   char *pipeReceptor = NULL;
   char *fileDatos = NULL;
   char *fileSalida = NULL;
-  bool ejecutando = true;
+  
 
   for (int i = 0; i < argc; i++) {
     if (strcmp(argv[i], "-f") == 0) {
@@ -355,8 +361,7 @@ int main(int argc, char *argv[]) {
       fileSalida = argv[i + 1];
       i++;
     }
-    if (strcmp(argv[i], "-v") == 0)
-      IS_VERBOSE = true;
+    if (strcmp(argv[i], "-v") == 0) IS_VERBOSE = true;
   }
 
   if (pipeReceptor == NULL || fileDatos == NULL) wrongUsage(argv[0]);
@@ -394,10 +399,10 @@ int main(int argc, char *argv[]) {
   sem_init(&semaforoReportLog, 0, 1);
   sem_init(&semaforoTareasDisponibles, 0, 0);
   sem_init(&semaforoBuffer, 0, 10);
-  
+
   while (ejecutando) {
     struct Report temporalReport;
-    while (read(pipe_fd, &msg, sizeof(msg)) > 0) {
+    while ((read(pipe_fd, &msg, sizeof(msg)) > 0) && ejecutando) {
       SYNC_VERBOSE_MSG("\nOperación: %c\nTitulo:    %s\nISBN:      %d",
                        msg.operation, msg.nombre, msg.isbn);
 
@@ -470,18 +475,27 @@ int main(int argc, char *argv[]) {
         }
         case 'Q': {
           ejecutando = false;
+          sendResponse(msg.pipeName, 0, "Saliendo...");
           break;
         }
         default:
           sendResponse(msg.pipeName, 0, "");
           break;
       }
+      
+      if(!ejecutando) break;
     }
   }
+  
+  close(pipe_fd);
+  
+  sem_post(&semaforoTareasDisponibles);
+  pthread_join(hTrabajador, NULL);
+  pthread_cancel(hConsola);
+
   sem_destroy(&semaforoBuffer);
   sem_destroy(&semaforoReportLog);
   sem_destroy(&semaforoTareasDisponibles);
-
-  close(pipe_fd);
+  
   return 0;
 }

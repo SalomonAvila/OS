@@ -131,37 +131,42 @@ int main(int argc, char *argv[]) {
       printf("\nIngrese operación (D/R/P) o Q para salir: ");
       scanf(" %c", &msg.operation);
 
-      if (msg.operation == 'Q') {
-        continuar = false;
-        printf("Saliendo del programa...\n");
-        break;
-      }
-
       if (msg.operation != 'D' && msg.operation != 'R' &&
-          msg.operation != 'P') {
+          msg.operation != 'P' && msg.operation != 'Q') {
         printf("Operación inválida. Intente nuevamente.\n");
         continue;
       }
 
-      // Pedir nombre
-      printf("Ingrese el nombre del libro: ");
-      scanf(" %[^\n]", msg.nombre);  // lee hasta salto de línea
+      if (msg.operation == 'Q') {
+        continuar = false;
+        strcpy(msg.nombre, "Salir");
+        msg.isbn = 0;
+      } else {
+        // Pedir nombre
+        printf("Ingrese el nombre del libro: ");
+        scanf(" %[^\n]", &msg.nombre);  // lee hasta salto de línea
 
-      // Pedir ISBN
-      printf("Ingrese el ISBN (entero): ");
-      if (scanf("%d", &msg.isbn) != 1) {
-        printf("ISBN inválido. Intente nuevamente.\n");
-        while (getchar() != '\n');  // limpiar buffer
-        continue;
+        // Pedir ISBN
+        printf("Ingrese el ISBN (entero): ");
+        if (scanf("%d", &msg.isbn) != 1) {
+          printf("ISBN inválido. Intente nuevamente.\n");
+          while (getchar() != '\n');  // limpiar buffer
+          continue;
+        }
+
+        // Mostrar confirmación
+        printf("\nOperación: %c\n", msg.operation);
+        printf("Nombre del libro: %s\n", msg.nombre);
+        printf("ISBN: %d\n", msg.isbn);
+
       }
-
-      // Mostrar confirmación
-      printf("\nOperación: %c\n", msg.operation);
-      printf("Nombre del libro: %s\n", msg.nombre);
-      printf("ISBN: %d\n", msg.isbn);
-
       // Enviar mensaje
       sendMessage(pipeReceptor, msg);
+
+      if(msg.operation == 'Q') {
+        exit(0);
+        printf("Saliendo del proceso solicitante\n");
+      }
     }
   } else {
     FILE *archivo = fopen(fileName, "r");
@@ -176,7 +181,6 @@ int main(int argc, char *argv[]) {
 
     while (fscanf(archivo, " %c , %99[^,] , %d", &msg.operation, msg.nombre,
                   &msg.isbn) == 3) {
-      if (msg.operation == 'Q') break;
       printf("Operación: %c\n", msg.operation);
       printf("Nombre del libro: %s\n", msg.nombre);
       printf("ISBN: %d\n\n", msg.isbn);
