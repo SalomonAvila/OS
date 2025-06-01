@@ -175,24 +175,20 @@ int executeOperation(struct TareaBuffer *ptr) {
                 break;
               }
               case 'R': {
-                // Supongo que si alguien intenta renovar un libro que no esta
-                // prestado, simplemente se lo prestan
+                if (estado == 'P') {
+                  time_t tiempo = time(NULL);
+                  struct tm *tlocal = localtime(&tiempo);
+                  tlocal->tm_mday += 7;
+                  mktime(tlocal);
 
-                // if (estado == 'P') {
+                  char newDate[11];
+                  strftime(newDate, 11, "%d-%m-%Y", tlocal);
 
-                time_t tiempo = time(NULL);
-                struct tm *tlocal = localtime(&tiempo);
-                tlocal->tm_mday += 7;
-                mktime(tlocal);
-
-                char newDate[11];
-                strftime(newDate, 11, "%d-%m-%Y", tlocal);
-
-                actualizadoLibro = ejemplar;
-                snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, P, %s\n",
-                         ejemplar, newDate);
-                actualizado = 1;
-                // }
+                  actualizadoLibro = ejemplar;
+                  snprintf(lineas[i + j], sizeof(lineas[i + j]), "%d, P, %s\n",
+                           ejemplar, newDate);
+                  actualizado = 1;
+                }
                 break;
               }
               default:
@@ -433,8 +429,8 @@ int main(int argc, char *argv[]) {
   while (ejecutando) {
     struct Report temporalReport;
     while (read(pipe_fd, &msg, sizeof(msg)) > 0) {
-      SYNC_VERBOSE_MSG("\nOperación: %c\nTitulo:    %s\nISBN:      %d", msg.operation,
-                       msg.nombre, msg.isbn);
+      SYNC_VERBOSE_MSG("\nOperación: %c\nTitulo:    %s\nISBN:      %d",
+                       msg.operation, msg.nombre, msg.isbn);
 
       switch (msg.operation) {
         case 'D': {
