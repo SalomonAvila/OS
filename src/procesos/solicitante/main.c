@@ -10,14 +10,14 @@
 
 #include "../../structs/message.h"
 
-// #ifdef DEBUG
+#ifdef DEBUG
 #define DEBUG_MSG(str, ...)                                \
   do {                                                     \
     printf("\e[34m[DEBUG] " str "\n\e[0m", ##__VA_ARGS__); \
   } while (false)
-// #else
-// #define DEBUG_MSG(str, ...) ((void)0)
-// #endif
+#else
+#define DEBUG_MSG(str, ...) ((void)0)
+#endif
 
 void wrongUsage(char *argv0) {
   printf("Error, el uso correcto es: \n\n");
