@@ -79,22 +79,15 @@ void sendResponse(const char *pipeSolicitante, int status,
   pthread_mutex_lock(&mutexSolicitante);
   struct PipeSMessage response = {0};
   response.status = status;
-  SYNC_DEBUG_MSG("Status: %d", status);
-  SYNC_DEBUG_MSG("Message: %s", message);
   strncpy(response.mensaje, message, sizeof(response.mensaje) - 1);
   response.mensaje[sizeof(response.mensaje) - 1] = '\0';
-
-  SYNC_DEBUG_MSG("Abriendo -%s-", pipeSolicitante);
   int pipe_fd = open(pipeSolicitante, O_WRONLY);
   if (pipe_fd == -1) {
     pthread_mutex_unlock(&mutexSolicitante);
     perror("Error al abrir el pipe");
     return;
   }
-
-  SYNC_DEBUG_MSG("Empezo a escribir");
   ssize_t bytes_written = write(pipe_fd, &response, sizeof(response));
-  SYNC_DEBUG_MSG("Termino de escribir");
 
   if (bytes_written != sizeof(response)) {
     perror("Error al escribir en el pipe");
@@ -119,8 +112,6 @@ int executeOperation(struct TareaBuffer *ptr) {
   struct TareaBuffer *tarea = ptr;
   const char *nombreBuscado = tarea->msg->nombre;
   int isbnBuscado = tarea->msg->isbn;
-  SYNC_DEBUG_MSG("EL nombre del archivo que se está buscando es: |%s|",
-                 tarea->msg->nombre);
 
   // Leer todo el archivo en memoria
   FILE *db = fopen(tarea->nombreArchivo, "r");
@@ -218,12 +209,24 @@ int executeOperation(struct TareaBuffer *ptr) {
     }
     for (int i = 0; i < total; i++) fputs(lineas[i], db);
     fclose(db);
-    SYNC_DEBUG_MSG("Ejemplar prestado exitosamente.");
-  } else if (encontrado) {
-    SYNC_DEBUG_MSG("No hay ejemplares disponibles para prestar.");
-  } else {
-    SYNC_DEBUG_MSG("Libro NO encontrado: %s, ISBN: %d", nombreBuscado,
-                   isbnBuscado);
+    
+    switch (tarea->msg->operation)
+    {
+    case 'D':
+      SYNC_VERBOSE_MSG("Libro Devuelvo correctamente");
+      break;
+    case 'R':
+      SYNC_VERBOSE_MSG("Libro Renovado correctamente");
+      break;
+    case 'P':
+      SYNC_VERBOSE_MSG("Libro Prestado correctamente");
+      break;
+    
+    default:
+      break;
+    }
+  }else {
+    SYNC_VERBOSE_MSG("No se pudo realizar la operación");
   }
 
   return actualizado ? actualizadoLibro : -1;
@@ -235,7 +238,6 @@ void addToReportBuffer(struct Report report) {
     reportLog[reportLogIndex] = report;
     reportLogIndex++;
   } else {
-    SYNC_DEBUG_MSG("Buffer de reporte lleno, no se puede agregar más.");
   }
   sem_post(&semaforoReportLog);
 }
@@ -276,9 +278,7 @@ void *hiloConsola(void *ptr) {
 }
 
 void agregarTareaBuffer(struct TareaBuffer *t) {
-  SYNC_DEBUG_MSG("Esperando que haya espacio en el buffer");
   sem_wait(&semaforoBuffer);  // Reduce un espacio
-  SYNC_DEBUG_MSG("Espera finalizada");
 
   pthread_mutex_lock(&mutexBuffer);
   if (bufferIndex < N) {
@@ -300,11 +300,6 @@ void *hiloTrabajador(void *ptr) {
 
     sem_getvalue(&semaforoBuffer, &valueSemBuffer);
     sem_getvalue(&semaforoTareasDisponibles, &valueSemTareas);
-
-    SYNC_DEBUG_MSG(" ------------- SemBuffer = %d", valueSemBuffer);
-    SYNC_DEBUG_MSG(" ------------- SemTareas = %d", valueSemTareas);
-
-    SYNC_DEBUG_MSG("HOLA");
     sem_wait(
         &semaforoTareasDisponibles);  // Espera a que haya una tarea disponible
 
@@ -327,13 +322,9 @@ void *hiloTrabajador(void *ptr) {
     strcpy(report->nombre, tarea.msg->nombre);
     strcpy(report->fecha, tarea.fecha);
     report->isbn = tarea.msg->isbn;
-
-    SYNC_DEBUG_MSG("Ejecutando operación en el hilo trabajor");
     int opResponse = executeOperation(&tarea);
-    SYNC_DEBUG_MSG("Operación ejecutada en el hilo trabajor");
 
     if (opResponse != -1) {
-      SYNC_DEBUG_MSG("Operación no completada");
       report->ejemplar = opResponse;
       addToReportBuffer(*report);
     }
@@ -366,13 +357,10 @@ int main(int argc, char *argv[]) {
   char actualDate[11];
   strftime(actualDate, 11, "%d-%m-%Y", tlocalActual);
   strftime(editDate, 11, "%d-%m-%Y", tlocal);
-  SYNC_DEBUG_MSG("%s\n", editDate);
   char *pipeReceptor = NULL;
   char *fileDatos = NULL;
   char *fileSalida = NULL;
   bool ejecutando = true;
-
-  SYNC_DEBUG_MSG("Iniciando el programa");
   /**
    * Toca arreglar esta logica porque a veces se totea con algunos inputs
    * especificos
@@ -381,19 +369,16 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[i], "-f") == 0) {
       if (i == argc + 1) wrongUsage(argv[0]);
       fileDatos = argv[i + 1];
-      SYNC_DEBUG_MSG("Filedatos leido = %s", fileDatos);
       i++;
     }
     if (strcmp(argv[i], "-p") == 0) {
       if (i == argc + 1) wrongUsage(argv[0]);
       pipeReceptor = argv[i + 1];
-      SYNC_DEBUG_MSG("PipeReceptor leido = %s", pipeReceptor);
       i++;
     }
     if (strcmp(argv[i], "-s") == 0) {
       if (i == argc + 1) wrongUsage(argv[0]);
       fileSalida = argv[i + 1];
-      SYNC_DEBUG_MSG("FileSalida leido = %s", fileSalida);
       i++;
     }
     if (strcmp(argv[i], "-v") == 0)
@@ -414,7 +399,6 @@ int main(int argc, char *argv[]) {
 
   if (mkfifo(pipeReceptor, 0666) == -1) {
     if (errno == EEXIST) {
-      SYNC_DEBUG_MSG("El pipe receptor ya existe. Intentando abrirlo.\n");
     } else {
       perror("Error al crear el pipe receptor");
       return -1;
@@ -442,13 +426,11 @@ int main(int argc, char *argv[]) {
   while (ejecutando) {
     struct Report temporalReport;
     while (read(pipe_fd, &msg, sizeof(msg)) > 0) {
-      SYNC_DEBUG_MSG("Entre :D");
-      SYNC_VERBOSE_MSG("Mensaje recibido: %c, %s, %d (%s)\n", msg.operation,
-                     msg.nombre, msg.isbn, msg.pipeName);
+      SYNC_VERBOSE_MSG("Mensaje recibido: %c, %s, %d", msg.operation,
+                     msg.nombre, msg.isbn);
 
       switch (msg.operation) {
         case 'D': {
-          SYNC_DEBUG_MSG("Procesando devolución del libro %d", msg.isbn);
           sendResponse(msg.pipeName, 1, "Devolución aceptada");
 
           struct TareaBuffer infoHilo;
@@ -468,7 +450,6 @@ int main(int argc, char *argv[]) {
           break;
         }
         case 'R': {
-          SYNC_DEBUG_MSG("Procesando Renovación del libro %d", msg.isbn);
           // DEBUG_MSG("EL bufferIndex va en: %d", bufferIndex);
           char response[500];
           snprintf(response, sizeof(response),
@@ -517,7 +498,6 @@ int main(int argc, char *argv[]) {
           break;
         }
         case 'Q': {
-          SYNC_DEBUG_MSG("Se recibio un Q");
           ejecutando = false;
           break;
         }
