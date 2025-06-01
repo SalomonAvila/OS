@@ -20,7 +20,7 @@ RECEPTOR_DEP    = $(RECEPTOR_OBJ:.o=.d)
 
 # Compilador
 CC = gcc
-CFLAGS = -Wall -MMD -MP 
+CFLAGS = -MMD -MP 
 
 all: $(SOLICITANTE) $(RECEPTOR)
 
