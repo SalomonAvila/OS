@@ -41,6 +41,10 @@ bool IS_VERBOSE = false;
 
 bool ejecutando = true;
 
+char *pipeReceptor = NULL;
+char *fileDatos = NULL;
+char *fileSalida = NULL;
+
 struct Report reportLog[10000];
 int reportLogIndex = 0;
 struct PipeRMessage msg;
@@ -242,6 +246,30 @@ void generateReport() {
   sem_post(&semaforoReportLog);
 }
 
+void escribirArchivoSalida() {
+  if (fileSalida == NULL || fileSalida[0] == '\0') {
+    return;
+  }
+
+  FILE *origen = fopen(fileDatos, "r");
+  FILE *destino = fopen(fileSalida, "w");
+
+  if (origen == NULL || destino == NULL) {
+    perror("Error al abrir archivos");
+    return;
+  }
+
+  char buffer[1024];
+  size_t bytes;
+
+  while ((bytes = fread(buffer, 1, sizeof(buffer), origen)) > 0) {
+    fwrite(buffer, 1, bytes, destino);
+  }
+
+  fclose(origen);
+  fclose(destino);
+}
+
 void *hiloConsola(void *ptr) {
   while (ejecutando) {
     printf("r - Generar reporte\n");
@@ -256,8 +284,8 @@ void *hiloConsola(void *ptr) {
     scanf(" %c", &com);
 
     if (com == 's') {
+      ejecutando = false;
       exit(0);
-      pthread_exit(NULL);
     } else if (com == 'r') {
       generateReport();
     } else {
@@ -340,11 +368,7 @@ int main(int argc, char *argv[]) {
   char actualDate[11];
   strftime(actualDate, 11, "%d-%m-%Y", tlocalActual);
   strftime(editDate, 11, "%d-%m-%Y", tlocal);
-  char *pipeReceptor = NULL;
-  char *fileDatos = NULL;
-  char *fileSalida = NULL;
   
-
   for (int i = 0; i < argc; i++) {
     if (strcmp(argv[i], "-f") == 0) {
       if (i == argc + 1) wrongUsage(argv[0]);
@@ -486,6 +510,14 @@ int main(int argc, char *argv[]) {
       if(!ejecutando) break;
     }
   }
+  
+  int semval = 50;
+  sem_getvalue(&semaforoTareasDisponibles, &semval);
+  while (semval > 0) {
+    sem_getvalue(&semaforoTareasDisponibles, &semval);
+  } 
+
+  escribirArchivoSalida();
   
   close(pipe_fd);
   
