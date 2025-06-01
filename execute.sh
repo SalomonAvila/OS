@@ -1,1 +1,0 @@
-make > /dev/null && bin/solicitante
